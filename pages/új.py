@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 import pandas as pd
 
 st.set_page_config(
@@ -7,7 +8,7 @@ st.set_page_config(
 )
 
 def main():
-    st.title("Streamlit Forms & Salary Calculator")
+    st.title("Streamlit Forms & Animal Shelter")
     menu = ["Home", "About"]
     choice = st.sidebar.selectbox("Menu", menu)
 
@@ -32,21 +33,32 @@ def main():
             submit_button = st.form_submit_button(label='Submit')
 
             if submit_button:
-                # Process the form data or perform any other desired actions
-                st.write(f"First Name: {firstname}")
-                st.write(f"Last Name: {lastname}")
-                st.write(f"Csipszám: {csipszam}")
-                st.write(f"Ivar: {ivar}")
-                st.write(f"Fajta vagy keverék típus: {fajta}")
-                st.write(f"Egészségi állapot: {egeszsegi_allapot}")
-                st.write(f"Fogazat: {fogazat}")
-                st.write(f"Kor: {kor}")
-                st.write(f"Viselkedés: {viselkedes}")
-                st.write(f"Egyéb jellemzők: {egyeb_jellemzok}")
+                # Adatok tárolása az SQLite adatbázisban
+                conn = sqlite3.connect("allat_menhely.db")
+                c = conn.cursor()
+
+                c.execute('''CREATE TABLE IF NOT EXISTS allatok 
+                             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                              firstname TEXT,
+                              lastname TEXT,
+                              csipszam TEXT,
+                              ivar TEXT,
+                              fajta TEXT,
+                              egeszsegi_allapot TEXT,
+                              fogazat TEXT,
+                              kor INTEGER,
+                              viselkedes TEXT,
+                              egyeb_jellemzok TEXT)''')
+
+                c.execute("INSERT INTO allatok (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok))
+
+                conn.commit()
+                conn.close()
+                st.success("Adatok sikeresen hozzáadva az adatbázishoz")
 
     else:
         st.subheader("About")
 
-main()
-
-#csipszám, ivar, ha egyértelmű, fajta, vagy fajtajellemzőkkel keverék tipus, egészségi állapot, fogazat, kor, viselkedés, egyéb jellemzők
+if __name__ == "__main__":
+    main()
