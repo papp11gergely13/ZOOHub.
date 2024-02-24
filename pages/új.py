@@ -1,12 +1,21 @@
-import streamlit as st
 import sqlite3
-import pandas as pd
+import streamlit as st
 
-st.set_page_config(
-    page_title="Állat menhely",
-    page_icon='🍆',
-)
+# Function to connect to the existing database
+def connect_to_database():
+    try:
+        # Connect to SQLite database
+        conn = sqlite3.connect("allat_menhely.db")
+        st.success("Database connection successful")
+        return conn
+    except sqlite3.Error as e:
+        st.error(f"Error connecting to database: {e}")
+        return None
 
+# Call the function to connect to the database
+conn = connect_to_database()
+
+# Define the main function
 def main():
     st.title("Streamlit Forms & Animal Shelter")
     menu = ["Home", "About"]
@@ -15,6 +24,7 @@ def main():
     if choice == "Home":
         st.subheader("Forms Tutorial")
 
+        # Display the form to add new entries
         with st.form(key='forml'):
             firstname = st.text_input("Firstname")
             lastname = st.text_input("Lastname")
@@ -33,29 +43,17 @@ def main():
             submit_button = st.form_submit_button(label='Submit')
 
             if submit_button:
-                # Adatok tárolása az SQLite adatbázisban
-                conn = sqlite3.connect("allat_menhely.db")
-                c = conn.cursor()
-
-                c.execute('''CREATE TABLE IF NOT EXISTS allatok 
-                             (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                              firstname TEXT,
-                              lastname TEXT,
-                              csipszam TEXT,
-                              ivar TEXT,
-                              fajta TEXT,
-                              egeszsegi_allapot TEXT,
-                              fogazat TEXT,
-                              kor INTEGER,
-                              viselkedes TEXT,
-                              egyeb_jellemzok TEXT)''')
-
-                c.execute("INSERT INTO allatok (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                          (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok))
-
-                conn.commit()
-                conn.close()
-                st.success("Adatok sikeresen hozzáadva az adatbázishoz")
+                if conn:
+                    try:
+                        c = conn.cursor()
+                        c.execute("INSERT INTO allatok (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                  (firstname, lastname, csipszam, ivar, fajta, egeszsegi_allapot, fogazat, kor, viselkedes, egyeb_jellemzok))
+                        conn.commit()
+                        st.success("Data successfully added to the database")
+                    except sqlite3.Error as e:
+                        st.error(f"Error adding data to the database: {e}")
+                else:
+                    st.error("Database connection failed. Cannot add data.")
 
     else:
         st.subheader("About")

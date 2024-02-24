@@ -2,72 +2,52 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-st.set_page_config(
-    page_title="Állat menhely",
-    page_icon='🍆',
-)
-
 def main():
-    st.title("Animal Shelter - Modify Data")
-    menu = ["Home", "About"]
-    choice = st.sidebar.selectbox("Menu", menu)
+    st.title("Streamlit SQLite Example")
 
-    if choice == "Home":
-        st.subheader("Modify Data")
+    # Connect to SQLite database
+    conn = sqlite3.connect("example.db")
+    c = conn.cursor()
 
-        # Adatok lekérdezése az adatbázisból
-        conn = sqlite3.connect("allat_menhely.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM allatok")
-        data = c.fetchall()
-        conn.close()
+    # Create the table if it does not exist
+    c.execute('''CREATE TABLE IF NOT EXISTS my_table
+                 (ID INTEGER PRIMARY KEY,
+                  Name TEXT,
+                  Age INTEGER)''')
 
-        # Adatok DataFrame konvertálása
-        df = pd.DataFrame(data, columns=["ID", "Firstname", "Lastname", "Csipszam", "Ivar", "Fajta", "Egeszsegi_allapot", "Fogazat", "Kor", "Viselkedes", "Egyeb_jellemzok"])
+    # Execute a query to fetch data from the table
+    c.execute("SELECT * FROM my_table")
+    data = c.fetchall()
 
-        # Táblázat megjelenítése
-        st.dataframe(df)
+    # Close the database connection
+    conn.close()
 
-        selected_row = st.number_input("Select a row to modify:", min_value=1, max_value=len(df), value=1, step=1)
+    # Convert the fetched data to a DataFrame
+    df = pd.DataFrame(data, columns=["ID", "Name", "Age"])
 
-        # A kiválasztott sor megjelenítése
-        selected_data = df.iloc[selected_row - 1]
-        st.subheader("Selected Row:")
-        st.write(selected_data)
+    # Display the DataFrame
+    st.write(df)
 
-        if st.button("Modify Data"):
-            # Módosítás logikája
-            new_firstname = st.text_input("New Firstname", selected_data['Firstname'])
-            new_lastname = st.text_input("New Lastname", selected_data['Lastname'])
-            # ... Az összes többi módosítandó adatot itt adja meg
+    # Allow user to modify data if there are rows in the DataFrame
+    if not df.empty:
+        selected_id = st.number_input("Enter ID of the row to modify:", min_value=1, max_value=df.shape[0])
+        if st.button("Modify Row"):
+            new_name = st.text_input("Enter new name:")
+            new_age = st.number_input("Enter new age:")
 
-            # Adatok módosítása a DataFrame-ben
-            df.loc[selected_row - 1, 'Firstname'] = new_firstname
-            df.loc[selected_row - 1, 'Lastname'] = new_lastname
-            # ... Az összes többi módosítandó adatot itt adja meg
-
-            # Adatok módosítása az SQLite adatbázisban
-            conn = sqlite3.connect("allat_menhely.db")
+            # Connect to SQLite database
+            conn = sqlite3.connect("example.db")
             c = conn.cursor()
 
-            c.execute("UPDATE allatok SET firstname=?, lastname=?, csipszam=?, ivar=?, fajta=?, egeszsegi_allapot=?, fogazat=?, kor=?, viselkedes=?, egyeb_jellemzok=? WHERE id=?",
-                      (new_firstname, new_lastname, selected_data['Csipszam'], selected_data['Ivar'], selected_data['Fajta'], selected_data['Egeszsegi_allapot'], selected_data['Fogazat'], selected_data['Kor'], selected_data['Viselkedes'], selected_data['Egyeb_jellemzok'], selected_row))
+            # Execute a query to update the selected row
+            c.execute("UPDATE my_table SET Name=?, Age=? WHERE ID=?", (new_name, new_age, selected_id))
 
+            # Commit changes and close the database connection
             conn.commit()
             conn.close()
-
-            # Táblázat frissítése
-            st.dataframe(df)
-
-            st.success("Adatok sikeresen módosítva")
-
+            st.success("Row modified successfully!")
     else:
-        st.subheader("About")
+        st.write("No data to modify.")
 
 if __name__ == "__main__":
     main()
- 
-
-
-
- 
