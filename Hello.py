@@ -5,6 +5,6 @@ st.set_page_config(
     page_icon='🍆',
 )
 
-
-st.title("Main Pages")
+st.title("Main Page")
+st.write("Welcome to the main page of the Állat menhely app. This is where you can start exploring our features.")
 st.sidebar.success("Select a page above")
